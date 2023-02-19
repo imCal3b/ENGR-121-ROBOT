@@ -23,6 +23,18 @@ void drop_the_ball();
 // -------------------------------
 task main()
 {
+	testing();
+}
+// ---------------------------------
+
+/*
+Function:	Use for the purpose of testing the implementation
+			of new functions.
+Inputs:		NA
+Return:		NA
+*/
+void testing()
+{
 	move(FORWARD, 40);
 	wait1Msec(5000); // 5 sec
 	move(LEFT_TURN, 35);
@@ -41,7 +53,6 @@ task main()
 	wait1Msec(2000);
 	move(STOP, 0);
 }
-// ---------------------------------
 
 /*
 Function:	Scans the arena looking for an IR signal. Once
@@ -58,11 +69,11 @@ void IR_scan()
 /*
 Function:	Sets the motors to move the car in the specified direction
 			and speed.
-				- Forward
-				- Backward
-				- Left
-				- Right
-				- Stop (default)
+			- Forward
+			- Backward
+			- Left
+			- Right
+			- Stop (default)
 Inputs:		int dir - Specified direction of movement
 			int speed - The speed of rotation of the motors
 Return:		NA
