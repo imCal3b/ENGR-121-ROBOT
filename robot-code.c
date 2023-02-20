@@ -14,10 +14,20 @@
 #define RIGHT_TURN 4
 #define STOP 0
 
+// constant definitions
+#define WHEEL_CIRC 0.659 // NOT ACTUAL VALUE
+#define ROBOT_WIDTH 0.25 // NOT ACTUAL VALUE
+#define MOTOR_REV 627
+#define PI 3.14159
+
 // function signature definitions
+void testing();
 void IR_scan();
 void move(int dir, int speed);
 void drop_the_ball();
+
+void drive_one_m();
+void quarter_rotate(int dir);
 
 // MAIN
 // -------------------------------
@@ -29,12 +39,13 @@ task main()
 
 /*
 Function:	Use for the purpose of testing the implementation
-			of new functions.
+					of new functions.
 Inputs:		NA
 Return:		NA
 */
 void testing()
 {
+	// testing movement abilities
 	move(FORWARD, 40);
 	wait1Msec(5000); // 5 sec
 	move(LEFT_TURN, 35);
@@ -46,18 +57,35 @@ void testing()
 	move(FORWARD, 40);
 	wait1Msec(5000);
 	move(STOP, 0);
+	wait1Msec(1500);
+	move(REVERSE, 35);
+	wait1Msec(3000);
+	move(STOP, 0);
+	wait1Msec(1500);
 
+	// testing drop mechanism
 	drop_the_ball();
 	wait1Msec(1500);
 	move(REVERSE, 30);
 	wait1Msec(2000);
 	move(STOP, 0);
+	wait1Msec(2000);
+
+	// testing drive 1 meter
+	drive_one_m();
+	wait1Msec(2000);
+
+	// testing 90 degree rotate
+	quarter_rotate(LEFT_TURN);
+	wait1Msec(2000);
+	quarter_rotate(RIGHT_TURN);
+	wait1Msec(2000);
 }
 
 /*
 Function:	Scans the arena looking for an IR signal. Once
-			a signal is detected, point the robot in the direction
-			of the strongest signal reading.
+					a signal is detected, point the robot in the direction
+					of the strongest signal reading.
 Inputs:		NA
 Return:		NA
 */
@@ -68,14 +96,14 @@ void IR_scan()
 
 /*
 Function:	Sets the motors to move the car in the specified direction
-			and speed.
-			- Forward
-			- Backward
-			- Left
-			- Right
-			- Stop (default)
+					and speed.
+					- Forward
+					- Backward
+					- Left
+					- Right
+					- Stop (default)
 Inputs:		int dir - Specified direction of movement
-			int speed - The speed of rotation of the motors
+					int speed - The speed of rotation of the motors
 Return:		NA
 */
 void move(int dir, int speed)
@@ -114,6 +142,10 @@ void move(int dir, int speed)
 	}
 }
 
+// ---------------------------
+// -- Milestone 1 Functions --
+// ---------------------------
+
 /*
 Function:	Raise the release mechanism to drop the ball.
 Inputs:		NA
@@ -128,4 +160,42 @@ void drop_the_ball()
 	motor[lift_motor] = -20;
 	wait1Msec(1000);
 	motor[lift_motor] = 0;
+}
+
+/*
+Function:	Move forward a distance of 1 meter.
+Inputs:		NA
+Return:		NA
+*/
+void drive_one_m()
+{
+	// 1 meter / circumference of wheel
+	float wheel_revs = 1.0/WHEEL_CIRC;
+	float pulses = wheel_revs * MOTOR_REV;
+
+	while (getMotorEncoder(right_motor) < pulses)
+	{
+		move(FORWARD, 40);
+	}
+
+	move(STOP, 0);
+}
+
+/*
+Function:	Rotate the robot 90 degrees.
+Inputs:		NA
+Return:		NA
+*/
+void quarter_rotate(int dir)
+{
+	// dist along arc for 90 / circumference of wheel
+	float wheel_revs = ((PI * ROBOT_WIDTH) / 4) / WHEEL_CIRC;
+	float pulses = wheel_revs * MOTOR_REV;
+
+	while (getMotorEncoder(right_motor) < pulses)
+	{
+		move(dir, 35);
+	}
+
+	move(STOP, 0);
 }
