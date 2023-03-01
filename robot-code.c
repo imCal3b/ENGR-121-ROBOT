@@ -1,6 +1,7 @@
 #pragma config(I2C_Usage, I2C1, i2cSensors)
 #pragma config(Sensor, dgtl1,  activate_button, sensorTouch)
 #pragma config(Sensor, dgtl2,  select_button,  sensorTouch)
+#pragma config(Sensor, dgtl3,  drop_button,    sensorTouch)
 #pragma config(Sensor, I2C_1,  ,               sensorQuadEncoderOnI2CPort,    , AutoAssign )
 #pragma config(Motor,  port1,           lift_motor,    tmotorVex393_HBridge, openLoop)
 #pragma config(Motor,  port2,           right_motor,   tmotorVex393_MC29, openLoop, reversed, encoderPort, I2C_1)
@@ -16,22 +17,24 @@
 #define STOP 0
 
 // constant definitions
-#define WHEEL_CIRC 0.324 // diam = 0.103m (10.3cm) | 0.103*PI = 0.324m circ.
+#define WHEEL_CIRC 0.44 // diam = 0.103m (10.3cm) | 0.103*PI = 0.324m circ.
 #define ROBOT_WIDTH 0.26 // 0.26m (26cm) wide
 #define MOTOR_ENCODER_REV 627
 #define PI 3.14159
 
 // function signature definitions
 void move(int dir, int speed);
-void drop_the_ball();
+void slow(int cur_pulses, int tot_pulses, int final_speed, int start_speed);
 
+void drop_the_ball();
 void drive_one_m();
 void quarter_rotate(int input_dir);
 
 int test_select(int num_tests);
 int test_cycle(int num_tests);
 void run_test(int test);
-void button_wait();
+
+int button_press();
 
 volatile int test = 0;
 
@@ -39,10 +42,10 @@ volatile int test = 0;
 // -------------------------------
 task main()
 {
+
 	while (true)
 	{
-		int test_pick = test_select(3);
-		run_test(test_pick);
+		run_test(button_press());
 	}
 }
 // ---------------------------------
@@ -97,6 +100,18 @@ void move(int dir, int speed)
 	}
 }
 
+void slow(int cur_pulses, int tot_pulses, int final_speed, int start_speed)
+{
+	int diff_pulses = 0 - tot_pulses + cur_pulses;
+	int diff_speed = start_speed - final_speed;
+
+	int new_speed = start_speed - (diff_speed - (diff_pulses / 627)*diff_speed);
+
+	if (new_speed < final_speed) new_speed = final_speed;
+
+	move(FORWARD, new_speed);
+}
+
 // ---------------------------
 // -- Milestone 1 Functions --
 // ---------------------------
@@ -109,9 +124,9 @@ Return:		NA
 void drop_the_ball()
 {
 	motor[lift_motor] = 20;
-	wait1Msec(1200);
+	wait1Msec(1500);
 	motor[lift_motor] = 0;
-	wait1Msec(2000);
+	wait1Msec(2500);
 	motor[lift_motor] = -20;
 	wait1Msec(1000);
 	motor[lift_motor] = 0;
@@ -130,8 +145,14 @@ void drive_one_m()
 
 	resetMotorEncoder(right_motor);
 
-	move(FORWARD, 40);
-	while (getMotorEncoder(right_motor) > pulses){/*do nothing*/}
+	move(FORWARD, 25);
+	while (getMotorEncoder(right_motor) > pulses)
+	{
+		if (getMotorEncoder(right_motor) < (pulses + 627))
+		{
+			slow(getMotorEncoder(right_motor), pulses, 20, 25);
+		}
+	}
 
 	move(STOP, 0);
 }
@@ -145,12 +166,12 @@ void quarter_rotate(int input_dir)
 {
 	// dist along arc for 90 / circumference of wheel
 	float wheel_revs = ((PI * ROBOT_WIDTH) / 4) / WHEEL_CIRC;
-	int right_pulses = wheel_revs * MOTOR_ENCODER_REV;
+	int right_pulses = 1.2 * wheel_revs * MOTOR_ENCODER_REV;
 	int left_pulses = right_pulses * -1;
 
 	resetMotorEncoder(right_motor);
 
-	move(input_dir, 30);
+	move(input_dir, 40);
 
 	// taking into account the direction of rotation of the encoder (+/-)
 	if (input_dir != RIGHT) {
@@ -227,8 +248,6 @@ void run_test(int test)
 		case 1:
 			// testing 90 degree rotate
 			quarter_rotate(LEFT);
-			wait1Msec(1500);
-			quarter_rotate(RIGHT);
 
 			break;
 
@@ -237,7 +256,7 @@ void run_test(int test)
 			drop_the_ball();
 			wait1Msec(1500);
 			move(REVERSE, 20);
-			wait1Msec(2000);
+			wait1Msec(1500);
 			move(STOP, 0);
 
 			break;
@@ -245,5 +264,15 @@ void run_test(int test)
 		default:
 			// do nothing
 			break;
+	}
+}
+
+int button_press()
+{
+	while (true)
+	{
+		if (SensorValue(select_button) == 1) return 0;
+		if (SensorValue(activate_button) == 1) return 1;
+		if (SensorValue(drop_button) == 1) return 2;
 	}
 }
