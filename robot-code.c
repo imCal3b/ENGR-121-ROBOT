@@ -39,7 +39,7 @@
 
 #define LONG_IR 0
 #define SHORT_IR 1
-#define IR_THRESHOLD 750
+#define IR_THRESHOLD 1025
 
 // function signature definitions
 void move(int dir, int speed);
@@ -185,7 +185,7 @@ int line_the_shot()
 	wait1Msec(500);
 
 	move(FORWARD, 15);
-	while(SensorValue(stop_button) != 1 || SensorValue(ping_sensor) > 65){/*do nothing*/} //SensorValue(ping_sensor) > 50 &&
+	while(SensorValue(stop_button) != 1 && SensorValue(ping_sensor) > 48){/*do nothing*/} //SensorValue(ping_sensor) > 60 &&
 	move(STOP, 0);
 
 	return 4;
@@ -294,7 +294,7 @@ void state_signal(int mode)
 
 			state_motor_pos += 125;
 
-			while((-1)*GetMotorEncoder(state_motor) < state_motor_pos) {}
+			while((-1) * getMotorEncoder(state_motor) < state_motor_pos) {}
 
 			motor[state_motor] = 0;
 
